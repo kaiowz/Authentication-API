@@ -107,7 +107,7 @@ module.exports = new class UsersController{
                 }
                 user.token = jwt.sign({userToken, iat: Math.floor(Date.now() / 1000) - 10800}, process.env.JWT_KEY);
                 user.save()
-                json.error.push({"msg": `${user._id} updated with success`}, {token:user.token})
+                json.result.push({"msg": `${user._id} updated with success`}, {token:user.token})
             }else{
                 json.error.push({"msg": "User not found"});
             }
@@ -118,11 +118,26 @@ module.exports = new class UsersController{
         res.json(json);
     }
 
+    async delete(req, res){
+        let json = {error: [], result:[]};
+        let {_id} = req.params;
+        await UsersModel.findOneAndDelete(_id).then((user)=>{
+            json.result.push({"msg": `${user.id} deleted with success`});
+        }).catch((err)=>{
+            json.error.push(err.message);
+        });
+        res.json(json);
+    }
+
     async profile(req, res){
         let json = {error: [], result:[]};
         let {token} = req.body;
         await UsersModel.findOne({token: token}).then((user)=>{
-            json.result.push(user);
+            if (user){
+                json.result.push(user);
+            }else{
+                json.error.push({"msg":"User not found"});
+            }
         }).catch((err)=>{
             json.error.push(err.message);
         });
