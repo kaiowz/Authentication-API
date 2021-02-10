@@ -3,11 +3,11 @@ const mongoose = require("mongoose");
 const modelSchema = new mongoose.Schema({
     email: String,
     cpf: Number,
-    tel: Number,
+    phone: Number,
     pass: String
 });
 
-const modelName = "Users";
+const modelName = "users";
 
 if (mongoose.connection && mongoose.connection.models[modelName]){
     module.exports = mongoose.connection.models[modelName];
