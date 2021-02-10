@@ -13,7 +13,13 @@ module.exports = new class UsersController{
         }
         const data = matchedData(req);
         //JWT Token with 3 hours of expiration
-        let token = jwt.sign({data, iat: Math.floor(Date.now() / 1000) - 10800}, process.env.JWT_KEY);
+        const userToken = {
+            email: user.email,
+            cpf: user.cpf,
+            phone: user.phone,
+            token: user.token
+        } 
+        let token = jwt.sign({userToken, iat: Math.floor(Date.now() / 1000) - 10800}, process.env.JWT_KEY);
         data.pass = await bcrypt.hash(data.pass, 10);
         data.token = token;
         await UsersModel.find({
@@ -60,7 +66,13 @@ module.exports = new class UsersController{
             if (user){
                 let match = await bcrypt.compare(data.pass, user.pass);
                 if (match){
-                    user.token = jwt.sign({user, iat: Math.floor(Date.now() / 1000) - 10800}, process.env.JWT_KEY);
+                    const userToken = {
+                        email: user.email,
+                        cpf: user.cpf,
+                        phone: user.phone,
+                        token: user.token
+                    } 
+                    user.token = jwt.sign({userToken, iat: Math.floor(Date.now() / 1000) - 10800}, process.env.JWT_KEY);
                     user.save();
                     json.result.push({"msg":"User logged with success"}, {token: user.token});
                 }else{
