@@ -61,6 +61,7 @@ module.exports = new class UsersController{
                 let match = await bcrypt.compare(data.pass, user.pass);
                 if (match){
                     user.token = jwt.sign({user, iat: Math.floor(Date.now() / 1000) - 10800}, process.env.JWT_KEY);
+                    user.save();
                     json.result.push({"msg":"User logged with success"}, {token: user.token});
                 }else{
                     json.error.push({"msg": "Invalid User and/or Password"});
@@ -75,7 +76,14 @@ module.exports = new class UsersController{
         res.json(json);
     }
 
-    async info(req, res){
-
+    async profile(req, res){
+        let json = {error: [], result:[]};
+        let {token} = req.body;
+        await UsersModel.findOne({token: token}).then((user)=>{
+            json.result.push(user);
+        }).catch((err)=>{
+            json.error.push(err.message);
+        });
+        res.json(json);
     }
 }
