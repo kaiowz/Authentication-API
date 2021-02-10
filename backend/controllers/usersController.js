@@ -14,10 +14,9 @@ module.exports = new class UsersController{
         const data = matchedData(req);
         //JWT Token with 3 hours of expiration
         const userToken = {
-            email: user.email,
-            cpf: user.cpf,
-            phone: user.phone,
-            token: user.token
+            email: data.email,
+            cpf: data.cpf,
+            phone: data.phone,
         } 
         let token = jwt.sign({userToken, iat: Math.floor(Date.now() / 1000) - 10800}, process.env.JWT_KEY);
         data.pass = await bcrypt.hash(data.pass, 10);
@@ -69,8 +68,7 @@ module.exports = new class UsersController{
                     const userToken = {
                         email: user.email,
                         cpf: user.cpf,
-                        phone: user.phone,
-                        token: user.token
+                        phone: user.phone
                     } 
                     user.token = jwt.sign({userToken, iat: Math.floor(Date.now() / 1000) - 10800}, process.env.JWT_KEY);
                     user.save();
