@@ -86,6 +86,38 @@ module.exports = new class UsersController{
         res.json(json);
     }
 
+    async update(req, res){
+        let json = {error: [], result: []};
+        let {_id} = req.params;
+        const errors = validationResult(req);
+        if (!errors.isEmpty()){
+            json.error.push(errors.mapped());
+            return res.json(json);
+        }
+        const data = matchedData(req);
+        if (data.pass){
+            data.pass = await bcrypt.hash(data.pass, 10);
+        }
+        await UsersModel.findByIdAndUpdate({_id}, data).then((user)=>{
+            if (user){
+                let userToken = {
+                    email: user.email,
+                    phone: user.phone,
+                    cpf: user.cpf
+                }
+                user.token = jwt.sign({userToken, iat: Math.floor(Date.now() / 1000) - 10800}, process.env.JWT_KEY);
+                user.save()
+                json.error.push({"msg": `${user._id} updated with success`}, {token:user.token})
+            }else{
+                json.error.push({"msg": "User not found"});
+            }
+        }).catch((err)=>{
+            json.error.push(err.message);
+        })
+
+        res.json(json);
+    }
+
     async profile(req, res){
         let json = {error: [], result:[]};
         let {token} = req.body;
