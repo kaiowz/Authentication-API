@@ -1,9 +1,10 @@
 const UsersModel = require("../models/usersModel");
 const {matchedData, validationResult} = require("express-validator")
 const bcrypt = require("bcrypt")
+const jwt = require("jsonwebtoken")
 
 module.exports = new class UsersController{
-    async singin(req, res){
+    async singup(req, res){
         let json = {error: [], result: []};
         const errors = validationResult(req);
         if (!errors.isEmpty()){
@@ -11,11 +12,10 @@ module.exports = new class UsersController{
             return res.json(json);
         }
         const data = matchedData(req);
-        let token = Date.now() + (Math.random() * 100).toFixed();
-        token = await bcrypt.hash(token, 10);
+        //JWT Token with 3 hours of expiration
+        let token = jwt.sign({data, iat: Math.floor(Date.now() / 1000) - 10800}, process.env.JWT_KEY);
         data.pass = await bcrypt.hash(data.pass, 10);
         data.token = token;
-
         await UsersModel.find({
            $or:[
                {cpf: data.cpf},
@@ -39,8 +39,40 @@ module.exports = new class UsersController{
         res.json(json);
     }
 
-    async signup(req, res){
+    async signin(req, res){
+        let json = {error:[], result:[]};
+        const data = req.body;
 
+        (!data.login) ? json.error.push({"msg": "You need to insert a user."}) : json.error = json.error;
+        (!data.pass) ? json.error.push({"msg": "You need to insert a password."}) : json.error = json.error;
+
+        if (json.error.length > 0){
+            return res.json(json);
+        }
+
+        await UsersModel.findOne({
+            $or:[
+                {cpf: data.login},
+                {email: data.login},
+                {phone: data.login},
+            ]
+        }).then(async (user) =>{
+            if (user){
+                let match = await bcrypt.compare(data.pass, user.pass);
+                if (match){
+                    user.token = jwt.sign({user, iat: Math.floor(Date.now() / 1000) - 10800}, process.env.JWT_KEY);
+                    json.result.push({"msg":"User logged with success"}, {token: user.token});
+                }else{
+                    json.error.push({"msg": "Invalid User and/or Password"});
+                }
+            }else{
+                json.error.push({"msg": "Invalid User and/or Password"});
+            }
+        }).catch((err) =>{
+            console.log(err);
+            json.error.push(err.message);
+        })
+        res.json(json);
     }
 
     async info(req, res){

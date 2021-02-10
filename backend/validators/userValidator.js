@@ -1,8 +1,8 @@
-const {checkSchema} = require("express-validator");
+const {checkSchema, check} = require("express-validator");
 const {cpf} = require("cpf-cnpj-validator");
 
 module.exports = {
-    new: checkSchema({
+    signup: checkSchema({
         email:{
             isEmail: true,
             notEmpty: true,
@@ -10,7 +10,7 @@ module.exports = {
         },
         cpf:{
             custom:{
-                options: (value) =>{
+                options: (value)=>{
                     return cpf.isValid(value);
                 }
             },
