@@ -2,9 +2,10 @@ const mongoose = require("mongoose");
 
 const modelSchema = new mongoose.Schema({
     email: String,
-    cpf: Number,
-    phone: Number,
-    pass: String
+    cpf: String,
+    phone: String,
+    pass: String,
+    token: String
 });
 
 const modelName = "users";
